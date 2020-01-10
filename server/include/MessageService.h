@@ -9,6 +9,8 @@
 #include <EventImpl.h>
 #include <thread>
 #include <ifc.h>
+#include <list>
+#define NUM_READ_TRY 3
 
 typedef unsigned char  Byte;
 class MessageService{
@@ -31,7 +33,7 @@ class Client{
         ~Client();
         Client(const Client& ) = delete;
         Client& operator=(const Client& ) = delete;
-        void parseMessage(Byte  *buffer, int len);
+        void parseMessage();
         void sendAck(Payload& );
         static void on_read(int fd, short ev, void *arg);
         void setFd(int fd){ m_fd = fd;}
@@ -39,7 +41,24 @@ class Client{
         struct event  m_evread;
 
     private:
+        struct TempMessage{
+            Byte   *buffer;
+            int    len;
+            TempMessage(){
+                buffer = NULL;
+                len = 0;
+            }
+            ~TempMessage(){
+                if(buffer)
+                    free(buffer);
+                len = 0;
+            }
+        };
         ConcurrentQueue<Payload>   *m_file_writer_queue;
+        std::list<TempMessage>     m_msg_list;
         int     m_fd;
+        bool    m_firstByte;
+        Byte*   m_currbuffer;
+        int     m_currbufflen;
 };
 #endif

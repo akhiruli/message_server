@@ -28,40 +28,57 @@ void MessageService::processEvent(int fd){
     ev_obj->addToEv(&client->m_evread);
 }
 
-Client::Client(ConcurrentQueue<Payload>   *file_writer_queue):m_file_writer_queue(file_writer_queue){
+Client::Client(ConcurrentQueue<Payload>   *file_writer_queue):m_file_writer_queue(file_writer_queue),
+        m_firstByte(true), m_currbuffer(NULL), m_currbufflen(0)
+{
 
 }
 
 Client::~Client(){
-
+    
 }
 
 void Client::on_read(int fd, short ev, void *arg){
     printf("MessageService::on_read:Got read event\n");
     Client *client = reinterpret_cast<Client *>(arg);
-    int len = -1;                                                               
-    Byte buffer[BUFLEN] = {'\0'};
-    len = read(fd, buffer, BUFLEN);
-
     EventImpl *ev_obj = EventImpl::getInstance();
-    if(len == 0){
-        printf("Client disconnected\n");
-        close(fd);
-        ev_obj->removeFromEv(&client->m_evread);
-        delete client;
-        return;
+    for(int i=0; i < NUM_READ_TRY; i++){
+        int len = 0;                                                               
+        Byte buffer[BUFLEN] = {'\0'};
+        len = read(fd, buffer, BUFLEN);
+
+        if(len == 0){
+            printf("Client disconnected\n");
+            close(fd);
+            ev_obj->removeFromEv(&client->m_evread);
+            delete client;
+            return;
+        }
+        else if(len < 0){
+            if(errno != EAGAIN){
+                printf("Socket failure, disconnecting client: %s\n", strerror(errno));
+                close(fd);
+                ev_obj->removeFromEv(&client->m_evread);
+                delete client;
+                return;
+            }
+            else if(errno == EAGAIN){
+                break;
+            }
+        }
+
+        printf("Received buffer : %s\n", buffer);
+
+        TempMessage tmsg;
+        tmsg.buffer = (Byte *)malloc(len);
+        memset(tmsg.buffer, 0, len);
+        memcpy(tmsg.buffer, buffer, len);
+        tmsg.len = len;
+
+        client->m_msg_list.push_back(tmsg);
     }
-    else if(len < 0){
-        printf("Socket failure, disconnecting client: %s\n", strerror(errno));
-        close(fd);
-        ev_obj->removeFromEv(&client->m_evread);
-        delete client;
-        return;
-    }
-   
     client->setFd(fd); 
-    printf("Received buffer : %s\n", buffer);
-    client->parseMessage(buffer, len);
+    client->parseMessage();
 }
 
 
@@ -72,13 +89,42 @@ void Client::sendAck(Payload& msg){
     }
 }
 
-void Client::parseMessage(Byte  *buffer, int len){
+void Client::parseMessage(){
+    while(!m_msg_list.empty()){
+        TempMessage tmsg= m_msg_list.front();
+        m_msg_list.pop_front();
+        if(tmsg.buffer){
+            uint32_t payload_len = 0;
+            if(m_currbufflen != 0){
+                //some buffered mesages to handle
+                if(m_firstByte && tmsg.len >= 4){                
+                    payload_len = ntohl(*((uint32_t *)tmsg.buffer));
+                    tmsg.buffer += 4;
+                    m_firstByte = false;
+                    tmsg.len -= 4;
+                }
+            }
+            if(m_firstByte && tmsg.len >= 4){
+                payload_len = ntohl(*((uint32_t *)tmsg.buffer));
+                tmsg.buffer += 4;
+                m_firstByte = false;
+                tmsg.len -= 4;
+            }
 
-    Payload pld;
-    pld.buffer = (Byte *)malloc(len);
-    memset(pld.buffer, 0, len);
-    memcpy(pld.buffer, buffer, len);
-
-    sendAck(pld);
-    m_file_writer_queue->push(pld);
+            if(tmsg.len >= payload_len){
+                Payload *pld = reinterpret_cast<Payload *>(tmsg.buffer);
+                m_file_writer_queue->push(*pld);
+                tmsg.len -= payload_len;
+                tmsg.buffer += payload_len;
+                m_firstByte = true;
+                if(tmsg.len != 0){
+                    m_currbuffer = (Byte *)malloc(tmsg.len);
+                    memset(m_currbuffer, 0, tmsg.len);
+                    memcpy(m_currbuffer, tmsg.buffer, tmsg.len);
+                    m_currbufflen = tmsg.len;
+                    m_firstByte = false;
+                }
+            }
+        }
+    } 
 }
