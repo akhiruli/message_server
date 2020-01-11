@@ -1,16 +1,10 @@
 #include<MessageServer.h>
+#include <Config.h>
 
 MessageServer::MessageServer(): m_index(0){
 }
 
 MessageServer::~MessageServer(){
-    /*for(auto it = 0; it < m_threadpool.size(); it++){
-        std::thread *t = m_threadpool[it].first;
-        MessageService *m = m_threadpool[it].second;
-
-        delete t;
-        delete m;
-    }*/
 }
 
 void MessageServer::run()                                                                              
@@ -67,10 +61,12 @@ int MessageServer::prepareTcpSvr()
         return -1;
     }
 
+    Config *cfg = Config::getInstance();
+
     memset(&listen_addr, 0, sizeof(listen_addr));
     listen_addr.sin_family = AF_INET;
     listen_addr.sin_addr.s_addr = INADDR_ANY;
-    listen_addr.sin_port = htons(9000);
+    listen_addr.sin_port = htons((cfg->m_cfg).port);
 
     if (bind(listen_fd, (struct sockaddr *)&listen_addr,
                 sizeof(listen_addr)) < 0)

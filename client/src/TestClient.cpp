@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <Config.h>
 
 std::vector<std::string> parseMessage(std::string& msg){
     std::vector <std::string> messages; 
@@ -25,7 +26,9 @@ int main(int argc, char** argv){
     uint32_t client_id = std::stoi(argv[1]);
     std::string msg = const_cast<char *>(argv[2]);
     std::vector<std::string> messages = parseMessage(msg);
-    Client cli("127.0.0.1", 9000);
+
+    Config *cfg = Config::getInstance();
+    Client cli((cfg->m_cfg).ip, (cfg->m_cfg).port);
     cli.startClient();
     cli.sendData(messages, client_id);
     return 0;

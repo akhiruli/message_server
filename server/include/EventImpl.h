@@ -18,7 +18,7 @@ class EventImpl {
       bool initEv();
       void addToEv(struct event *ev);
       void addToEv(struct event *ev, struct timeval *t_intvl);
-      bool removeFromEv(struct event *ev);
+      void removeFromEv(struct event *ev);
       struct event* getNewPersistentEvent(event_callback_fn cb, void *cookie);
    private:
       EventImpl();

@@ -1,9 +1,14 @@
 #include <FileWriteWorker.h>
+#include <Config.h>
 
-FileWriteWorker::FileWriteWorker(){
-    m_filename = "message_info.txt";
+FileWriteWorker::FileWriteWorker(): m_bufferMsg(""), m_numbufferedmsg(0){
+    Config *cfg = Config::getInstance();
+    if((cfg->m_cfg).filename.empty())
+        m_filename = "message_info.txt";
+    else
+        m_filename = (cfg->m_cfg).filename;
 
-    //m_ofs.open(m_filename.c_str(), std::ios::out | std::ios::app);
+    m_maxbufmsg = (cfg->m_cfg).msg_per_write;
 }
 
 FileWriteWorker::~FileWriteWorker(){
@@ -32,18 +37,23 @@ void FileWriteWorker::processMsg(Payload& msg){
 
     str = std::to_string(client_id) + " " + std::to_string(msg_id) + " " + std::string((char *)msg.name) + " " +  message + "\n";
 
-    printf("framed message: %s\n", str.c_str()); 
-    
+    printf("framed message: %s\n", str.c_str());
+
+    m_bufferMsg.append(str);
+    ++m_numbufferedmsg;
+
+    if(m_numbufferedmsg < m_maxbufmsg){
+        printf("Buffering the message for future write as number of message haven't reached the minim configured number\n");
+        return;
+    } 
+
+    printf("Writing to file now\n");
+        
     std::fstream fs;
     fs.open(m_filename.c_str(), std::ios::out | std::ios::app);
-    fs <<str.c_str();
+    fs <<m_bufferMsg.c_str();
     fs.close();
-    /*if(m_ofs.is_open()){
-        printf("open\n");
-        m_ofs <<str.c_str();
-    }
-    else{
-        m_ofs.open(m_filename, std::ofstream::out | std::ofstream::app);
-        m_ofs <<str.c_str();
-    }*/
+
+    m_numbufferedmsg = 0;
+    m_bufferMsg = "";
 }

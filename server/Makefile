@@ -9,9 +9,10 @@ LDFLAGS +=   -Wl,-rpath-link -lstdc++ -levent -std=c++11 -std=gnu++14 -lpthread
 
 msgserver_sources = \
 		src/EventImpl.cpp	\
+        src/Config.cpp  \
         src/MessageServer.cpp   \
         src/MessageService.cpp  \
-        src/MessageServerTest.cpp   \
+        src/TestServer.cpp   \
         src/FileWriteWorker.cpp
 
 APPS = msgserver 

@@ -15,8 +15,11 @@ class FileWriteWorker{
         void entrypoint(ConcurrentQueue<Payload> &queue);
         void processMsg(Payload& msg);
     private:
-        std::fstream   m_ofs;
+        std::fstream    m_ofs;
         std::string     m_filename;
+        std::string     m_bufferMsg;
+        uint16_t        m_numbufferedmsg;
+        uint16_t        m_maxbufmsg; 
 };
 
 #endif

@@ -8,6 +8,7 @@ CPPFLAGS+= -g -std=c++11 -std=gnu++14 -Wfatal-errors -O1
 LDFLAGS +=   -Wl,-rpath-link -lstdc++ -levent -std=c++11 -std=gnu++14 -lpthread
 
 msgclient_sources = \
+    src/Config.cpp  \
     src/Client.cpp  \
     src/TestClient.cpp
 

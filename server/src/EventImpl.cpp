@@ -65,6 +65,6 @@ void EventImpl::addToEv(struct event *ev, struct timeval *t_intvl)
    event_add(ev, t_intvl);
 }
 
-bool EventImpl:: removeFromEv(struct event *ev){
+void EventImpl:: removeFromEv(struct event *ev){
     event_del(ev);
 }
