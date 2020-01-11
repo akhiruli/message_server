@@ -27,7 +27,6 @@ void FileWriteWorker::entrypoint(ConcurrentQueue<Payload> &queue){
 }
 
 void FileWriteWorker::processMsg(Payload& msg){
-    printf("FileWriteWorker::processMsg: nessage %s\n", msg.buffer);
 
     uint32_t client_id = ntohl(msg.client_id);
     uint32_t msg_id = ntohl(msg.msg_id);
@@ -36,8 +35,6 @@ void FileWriteWorker::processMsg(Payload& msg){
     std::string str("");
 
     str = std::to_string(client_id) + " " + std::to_string(msg_id) + " " + std::string((char *)msg.name) + " " +  message + "\n";
-
-    printf("framed message: %s\n", str.c_str());
 
     m_bufferMsg.append(str);
     ++m_numbufferedmsg;

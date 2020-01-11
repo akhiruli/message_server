@@ -11,12 +11,14 @@ struct ConfigParams{
     uint16_t    port;
     std::string filename;
     uint16_t    msg_per_write;
+    uint16_t    time_interval_btn_msg;
 
     ConfigParams(){
         ip = "127.0.0.1";
         port = 9000;
         filename = "message_info.txt";
         msg_per_write = 1;
+        time_interval_btn_msg = 0;
     }
 };
 

@@ -37,6 +37,7 @@ bool Client::startClient(){
 
 int Client::sendData(std::vector<std::string> messages, uint32_t clientId){
     int write_len = 0;
+    Config *cfg = Config::getInstance();
     for(int i=0; i < messages.size(); i++){
 
         struct Payload pload;
@@ -70,6 +71,10 @@ int Client::sendData(std::vector<std::string> messages, uint32_t clientId){
         }
 
         printf("Received ack: %s\n", buff);
+
+        if((cfg->m_cfg).time_interval_btn_msg != 0){
+            sleep((cfg->m_cfg).time_interval_btn_msg);
+        }
     }
     return write_len;
 }

@@ -12,8 +12,8 @@
 #include <unistd.h>
 #include <string> 
 #include <vector>
+#include <Config.h>
 #define MAX 80 
-#define PORT 9000
 #define SA struct sockaddr 
 
 class Client{

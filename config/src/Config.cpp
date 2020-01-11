@@ -64,5 +64,9 @@ void Config::fillConfigParams( std::map<std::string, std::string>& tempMap){
         m_cfg.msg_per_write = std::stoi(itr->second);
     }
 
+    itr = tempMap.find("TIME_INTERVAL_BTN_MSG");
+    if(itr != tempMap.end()){
+        m_cfg.time_interval_btn_msg = std::stoi(itr->second);
+    }
     printf("ip=%s, port=%d, filename=%s, msg_per_write=%d\n", m_cfg.ip.c_str(), m_cfg.port, m_cfg.filename.c_str(), m_cfg.msg_per_write);
 }

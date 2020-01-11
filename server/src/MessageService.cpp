@@ -13,15 +13,14 @@ void MessageService::entrypoint(ConcurrentQueue<int>& queue){
     printf("created a thread with threadId %d\n", std::this_thread::get_id());
     while(1){
         auto fd = queue.pop();
-        printf("Received a fd %d\n", fd);
         processEvent(fd);
     }
 
-    printf("exiting thread hreadId %d\n", std::this_thread::get_id());
+    printf("exiting thread threadId %d\n", std::this_thread::get_id());
 }
 
 void MessageService::processEvent(int fd){
-    printf("MessageService::processEvent: fd %d\n", fd);
+    printf("MessageService::processEvent: threadId %d fd %d\n", std::this_thread::get_id(), fd);
     EventImpl *ev_obj = EventImpl::getInstance();
     Client *client = new Client(m_file_writer_queue);
     ev_obj->attachFdtoEv(&client->m_evread, fd, Client::on_read, client);
@@ -39,7 +38,6 @@ Client::~Client(){
 }
 
 void Client::on_read(int fd, short ev, void *arg){
-    printf("MessageService::on_read:Got read event\n");
     Client *client = reinterpret_cast<Client *>(arg);
     EventImpl *ev_obj = EventImpl::getInstance();
     for(int i=0; i < NUM_READ_TRY; i++){
@@ -68,8 +66,6 @@ void Client::on_read(int fd, short ev, void *arg){
             }
         }
 
-        printf("Received len: %d\n", len);
-
         TempMessage tmsg;
         tmsg.buffer = buffer;
         tmsg.len = len;
@@ -97,11 +93,9 @@ void Client::parseMessage(){
     while(!m_msg_list.empty()){
         TempMessage tmpMsg = m_msg_list.front();
         m_msg_list.pop_front();
-        printf("%d:%d\n", tmpMsg.len, req_size);
         if(tmpMsg.len == req_size){
             p_load = reinterpret_cast<struct Payload *>(tmpMsg.buffer);
             m_file_writer_queue->push(*p_load);
-            printf("Client::parseMessage:pushing\n");
         }
         else if(tmpMsg.len > req_size){
             p_load = reinterpret_cast<struct Payload *>(tmpMsg.buffer);

@@ -107,7 +107,6 @@ int MessageServer::setnonblock(int fd)
 void MessageServer::on_accept(int fd, short ev, void *arg)
 {
     MessageServer *server = reinterpret_cast<MessageServer *>(arg);
-    printf("Accepting sokcet with fd %d\n", fd);
 
     int client_fd;
     struct sockaddr_in client_addr;
@@ -130,7 +129,6 @@ void MessageServer::on_accept(int fd, short ev, void *arg)
 }
 
 void MessageServer::loadbalance_fd(int fd){
-    printf("MessageServer::loadbalance_fd: %d\n", fd);
     if(m_index >= m_threadpool.size())
         m_index = 0;
 
@@ -138,6 +136,5 @@ void MessageServer::loadbalance_fd(int fd){
 
     queue->push(fd);
 
-    printf("Pushed the fd %d to queue, index=%d\n", fd, m_index);
     m_index++;
 }
