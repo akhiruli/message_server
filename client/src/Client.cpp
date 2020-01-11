@@ -42,6 +42,39 @@ int Client::sendData(std::vector<std::string> messages, uint32_t clientId){
         struct Payload pload;
         pload.client_id = htonl(clientId);
         pload.msg_id = htonl(i+1);
+        memset(pload.buffer, '\0', PAYLOAD_SIZE);
+        memcpy(pload.buffer, messages[i].c_str(), messages[i].size());
+
+        std::string msgname("client");
+        msgname = msgname + "_" +std::to_string(clientId);
+        memset(pload.name, '\0', NAME_SIZE);
+        strcpy(pload.name, msgname.c_str());
+ 
+        int len =  write(m_fd, (Byte *)&pload, sizeof(pload));
+
+        if(len < 0){
+            printf("Failed to send data to server with error %s\n", strerror(errno));
+            if(write_len == 0)
+                return -1;
+            else
+                return write_len;
+        }
+
+        write_len += len;
+
+        char buff[MAX] = {'\0'};
+        int read_len = read(m_fd, buff, sizeof(buff));
+        if(read_len < 0){
+            printf("Failed to read the response from server\n");
+            return write_len;
+        }
+
+        printf("Received ack: %s\n", buff);
+    }
+    return write_len;
+}
+
+#if 0
         memset(pload.name, '\0', 512);
         std::string msgname("client");
         msgname = msgname + "_" +std::to_string(clientId);
@@ -72,26 +105,5 @@ int Client::sendData(std::vector<std::string> messages, uint32_t clientId){
         memcpy(buffer_to_send + curr_len, &pload.buffer, msglen);
         curr_len += msglen;
 
-        int len =  write(m_fd, buffer_to_send, curr_len);
 
-        if(len < 0){
-            printf("Failed to send data to server with error %s\n", strerror(errno));
-            if(write_len == 0)
-                return -1;
-            else
-                return write_len;
-        }
-
-        write_len += len;
-
-        char buff[MAX];
-        int read_len = read(m_fd, buff, sizeof(buff));
-        if(read_len < 0){
-            printf("Failed to read the response from server\n");
-            return write_len;
-        }
-
-        printf("Received ack: %s\n", buff);
-    }
-    return write_len;
-}
+#endif

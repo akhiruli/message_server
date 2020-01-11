@@ -34,7 +34,7 @@ class Client{
         Client(const Client& ) = delete;
         Client& operator=(const Client& ) = delete;
         void parseMessage();
-        void sendAck(Payload& );
+        void sendAck();
         static void on_read(int fd, short ev, void *arg);
         void setFd(int fd){ m_fd = fd;}
     public:
@@ -49,8 +49,8 @@ class Client{
                 len = 0;
             }
             ~TempMessage(){
-                if(buffer)
-                    free(buffer);
+                //if(buffer)
+                  //  free(buffer);
                 len = 0;
             }
         };

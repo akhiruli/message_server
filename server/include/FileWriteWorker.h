@@ -2,8 +2,11 @@
 #define _F_WRITER_H_
 
 #include <thread>
-#include<ConcurrentQueue.h>
+#include <ConcurrentQueue.h>
 #include <ifc.h>
+#include <string>
+#include <fstream>
+#include <arpa/inet.h> 
 
 class FileWriteWorker{
     public:
@@ -12,6 +15,8 @@ class FileWriteWorker{
         void entrypoint(ConcurrentQueue<Payload> &queue);
         void processMsg(Payload& msg);
     private:
+        std::fstream   m_ofs;
+        std::string     m_filename;
 };
 
 #endif

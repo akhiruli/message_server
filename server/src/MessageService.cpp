@@ -2,7 +2,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#define BUFLEN 1024
+#define BUFLEN 1200
 
 MessageService::MessageService() {
 }
@@ -43,8 +43,9 @@ void Client::on_read(int fd, short ev, void *arg){
     Client *client = reinterpret_cast<Client *>(arg);
     EventImpl *ev_obj = EventImpl::getInstance();
     for(int i=0; i < NUM_READ_TRY; i++){
-        int len = 0;                                                               
-        Byte buffer[BUFLEN] = {'\0'};
+        int len = -1;                                                               
+        Byte *buffer = (Byte *)malloc(BUFLEN);
+        memset(buffer, '\0', BUFLEN);
         len = read(fd, buffer, BUFLEN);
 
         if(len == 0){
@@ -67,22 +68,23 @@ void Client::on_read(int fd, short ev, void *arg){
             }
         }
 
-        printf("Received buffer : %s\n", buffer);
+        printf("Received len: %d\n", len);
 
         TempMessage tmsg;
-        tmsg.buffer = (Byte *)malloc(len);
-        memset(tmsg.buffer, 0, len);
-        memcpy(tmsg.buffer, buffer, len);
+        tmsg.buffer = buffer;
         tmsg.len = len;
 
         client->m_msg_list.push_back(tmsg);
+        //struct Payload *p_load = reinterpret_cast<struct Payload *>(buffer);
+        //client->m_file_writer_queue->push(*p_load);
     }
     client->setFd(fd); 
     client->parseMessage();
+    client->sendAck();
 }
 
 
-void Client::sendAck(Payload& msg){
+void Client::sendAck(){
     int len = write(m_fd, "ack", 3);
     if (len == -1){
         printf("Client::sendAck:Failed to send the Ack to client\n");
@@ -90,41 +92,48 @@ void Client::sendAck(Payload& msg){
 }
 
 void Client::parseMessage(){
+    int req_size = sizeof(struct Payload);
+    struct Payload *p_load = NULL;
     while(!m_msg_list.empty()){
-        TempMessage tmsg= m_msg_list.front();
+        TempMessage tmpMsg = m_msg_list.front();
         m_msg_list.pop_front();
-        if(tmsg.buffer){
-            uint32_t payload_len = 0;
-            if(m_currbufflen != 0){
-                //some buffered mesages to handle
-                if(m_firstByte && tmsg.len >= 4){                
-                    payload_len = ntohl(*((uint32_t *)tmsg.buffer));
-                    tmsg.buffer += 4;
-                    m_firstByte = false;
-                    tmsg.len -= 4;
-                }
-            }
-            if(m_firstByte && tmsg.len >= 4){
-                payload_len = ntohl(*((uint32_t *)tmsg.buffer));
-                tmsg.buffer += 4;
-                m_firstByte = false;
-                tmsg.len -= 4;
-            }
-
-            if(tmsg.len >= payload_len){
-                Payload *pld = reinterpret_cast<Payload *>(tmsg.buffer);
-                m_file_writer_queue->push(*pld);
-                tmsg.len -= payload_len;
-                tmsg.buffer += payload_len;
-                m_firstByte = true;
-                if(tmsg.len != 0){
-                    m_currbuffer = (Byte *)malloc(tmsg.len);
-                    memset(m_currbuffer, 0, tmsg.len);
-                    memcpy(m_currbuffer, tmsg.buffer, tmsg.len);
-                    m_currbufflen = tmsg.len;
-                    m_firstByte = false;
-                }
-            }
+        printf("%d:%d\n", tmpMsg.len, req_size);
+        if(tmpMsg.len == req_size){
+            p_load = reinterpret_cast<struct Payload *>(tmpMsg.buffer);
+            m_file_writer_queue->push(*p_load);
+            printf("Client::parseMessage:pushing\n");
         }
-    } 
-}
+        else if(tmpMsg.len > req_size){
+            p_load = reinterpret_cast<struct Payload *>(tmpMsg.buffer);
+            m_file_writer_queue->push(*p_load);
+            TempMessage tmp;
+            int leftByte = tmpMsg.len -req_size;
+            tmp.buffer = (Byte *) malloc(leftByte);
+            memset(tmp.buffer, '\0', leftByte);
+            memcpy(tmp.buffer, tmpMsg.buffer + req_size, leftByte);
+            tmp.len = leftByte;
+            m_msg_list.push_front(tmp);
+        }
+        else{
+            if(!m_msg_list.empty()){
+                TempMessage mergeMsg;
+                TempMessage tmp = m_msg_list.front();
+                m_msg_list.pop_front();
+                mergeMsg.buffer = (Byte *)malloc(tmpMsg.len + tmp.len);
+                memset(mergeMsg.buffer, '\0', tmpMsg.len + tmp.len);
+                memcpy(mergeMsg.buffer, tmpMsg.buffer, tmpMsg.len);
+                mergeMsg.buffer += tmpMsg.len;
+                memcpy(mergeMsg.buffer, tmp.buffer, tmp.len);
+
+                m_msg_list.push_front(mergeMsg);
+            }
+            else{
+                m_msg_list.push_front(tmpMsg);
+                break;
+            } 
+        }
+    }
+} 
+
+
+

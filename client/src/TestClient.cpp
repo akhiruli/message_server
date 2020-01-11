@@ -22,8 +22,6 @@ int main(int argc, char** argv){
         return 0;
     }
 
-    printf("%d", argc);
-
     uint32_t client_id = std::stoi(argv[1]);
     std::string msg = const_cast<char *>(argv[2]);
     std::vector<std::string> messages = parseMessage(msg);
