@@ -62,5 +62,31 @@ Compilation Steps:
     1. inside message_server folder run the following command.
         ./build.sh
         Above command will create two binary msgserver and msgclient under bin directory.
+ Steps to run:
+ Server:
+    1. Before starting the server please run the following script in sudo mode.
+        sudo ./tcp_tuning_params.sh
+    2. Please change the configuration in the config file app.conf as per the need
+       eg. MSG_PER_WRITE=5 , means filewriter thread will buffer 5 messages before writing to file.
+    3. Now start the server using the following command:
+        bin/msgserver
+ Client:
+    1. Please change the configuration in the config file app.conf as per the need.
+       e.g if you want a sleep of belween two message the use the following configuration.
+          TIME_INTERVAL_BTN_MSG=5
+    2. run the client using the following command:
+        bin/msgclient <client_id(int type)> <messages in comma separted format>
+        e.g: bin/msgclient 1 hi,hello
+  
+        It will send two messages to server (hi and hello) with client_id 1 and sequential messageIds.
+        
+  Filewriter thread writes messages to configured file mentioned in app.conf in the following format:
+  
+  <client_id> <message_id> <message_name> <message>
+  
+  TESTS:
+  
+  1. Number of concurrent TCP connections handles by server:
+  2.
  
   
