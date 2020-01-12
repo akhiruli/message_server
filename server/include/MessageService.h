@@ -20,16 +20,16 @@ class MessageService{
         void entrypoint(ConcurrentQueue<int>&);
         void processEvent(int fd);
         //static void on_read(int fd, short ev, void *arg);
-        void setFileWriterQueue(ConcurrentQueue<Payload> *queue){
+        void setFileWriterQueue(ConcurrentQueue<Payload *> *queue){
             this->m_file_writer_queue = queue;
         }
     private:
-        ConcurrentQueue<Payload>   *m_file_writer_queue;
+        ConcurrentQueue<Payload*>   *m_file_writer_queue;
 };
 
 class Client{
     public:
-        Client(ConcurrentQueue<Payload>   *);
+        Client(ConcurrentQueue<Payload*>   *);
         ~Client();
         Client(const Client& ) = delete;
         Client& operator=(const Client& ) = delete;
@@ -54,7 +54,7 @@ class Client{
                 len = 0;
             }
         };
-        ConcurrentQueue<Payload>   *m_file_writer_queue;
+        ConcurrentQueue<Payload*>   *m_file_writer_queue;
         std::list<TempMessage>     m_msg_list;
         int     m_fd;
         bool    m_firstByte;

@@ -4,7 +4,7 @@
 Config* Config::m_obj = NULL;
 static std::mutex config_mutex;
 
-Config::Config(): m_filename("../app.conf"){
+Config::Config(): m_filename("app.conf"){
     loadConfig();
 }
 

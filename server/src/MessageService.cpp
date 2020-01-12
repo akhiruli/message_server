@@ -27,7 +27,7 @@ void MessageService::processEvent(int fd){
     ev_obj->addToEv(&client->m_evread);
 }
 
-Client::Client(ConcurrentQueue<Payload>   *file_writer_queue):m_file_writer_queue(file_writer_queue),
+Client::Client(ConcurrentQueue<Payload*>   *file_writer_queue):m_file_writer_queue(file_writer_queue),
         m_firstByte(true), m_currbuffer(NULL), m_currbufflen(0)
 {
 
@@ -50,6 +50,7 @@ void Client::on_read(int fd, short ev, void *arg){
             printf("Client disconnected\n");
             close(fd);
             ev_obj->removeFromEv(&client->m_evread);
+            free(buffer);
             delete client;
             return;
         }
@@ -59,10 +60,12 @@ void Client::on_read(int fd, short ev, void *arg){
                 close(fd);
                 ev_obj->removeFromEv(&client->m_evread);
                 delete client;
+                free(buffer);
                 return;
             }
             else if(errno == EAGAIN){
-                break;
+               free(buffer);
+               break;
             }
         }
 
@@ -71,8 +74,6 @@ void Client::on_read(int fd, short ev, void *arg){
         tmsg.len = len;
 
         client->m_msg_list.push_back(tmsg);
-        //struct Payload *p_load = reinterpret_cast<struct Payload *>(buffer);
-        //client->m_file_writer_queue->push(*p_load);
     }
     client->setFd(fd); 
     client->parseMessage();
@@ -95,11 +96,14 @@ void Client::parseMessage(){
         m_msg_list.pop_front();
         if(tmpMsg.len == req_size){
             p_load = reinterpret_cast<struct Payload *>(tmpMsg.buffer);
-            m_file_writer_queue->push(*p_load);
+            m_file_writer_queue->push(p_load);
         }
         else if(tmpMsg.len > req_size){
-            p_load = reinterpret_cast<struct Payload *>(tmpMsg.buffer);
-            m_file_writer_queue->push(*p_load);
+            p_load = (struct Payload *)malloc(req_size);
+            memset(p_load, '\0', req_size);
+            memcpy(p_load, tmpMsg.buffer, req_size);
+            m_file_writer_queue->push(p_load);
+            //p_Load = NULL;
             TempMessage tmp;
             int leftByte = tmpMsg.len -req_size;
             tmp.buffer = (Byte *) malloc(leftByte);
@@ -107,6 +111,8 @@ void Client::parseMessage(){
             memcpy(tmp.buffer, tmpMsg.buffer + req_size, leftByte);
             tmp.len = leftByte;
             m_msg_list.push_front(tmp);
+
+            free(tmpMsg.buffer);
         }
         else{
             if(!m_msg_list.empty()){
@@ -120,6 +126,9 @@ void Client::parseMessage(){
                 memcpy(mergeMsg.buffer, tmp.buffer, tmp.len);
 
                 m_msg_list.push_front(mergeMsg);
+
+                free(tmpMsg.buffer);
+                free(tmp.buffer);
             }
             else{
                 m_msg_list.push_front(tmpMsg);

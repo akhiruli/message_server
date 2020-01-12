@@ -36,6 +36,6 @@ class MessageServer {
         int             m_index;
         struct event    m_evread;
         std::vector<std::pair<std::thread*, ConcurrentQueue<int> *>>     m_threadpool;
-        std::pair<std::thread*, ConcurrentQueue<Payload> *>     m_fileWriterthread;
+        std::pair<std::thread*, ConcurrentQueue<Payload *> *>     m_fileWriterthread;
 }; 
 #endif

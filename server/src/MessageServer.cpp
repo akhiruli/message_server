@@ -24,7 +24,7 @@ void MessageServer::run()
 } 
 
 void MessageServer::spawnWorkers(){
-    ConcurrentQueue<Payload> *queue_file_writer = new ConcurrentQueue<Payload>();
+    ConcurrentQueue<Payload *> *queue_file_writer = new ConcurrentQueue<Payload *>();
 
     for(auto i = 0; i <4; i++){
         MessageService  *m_obj = new MessageService();

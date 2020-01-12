@@ -12,8 +12,8 @@ class FileWriteWorker{
     public:
         FileWriteWorker();
         ~FileWriteWorker();
-        void entrypoint(ConcurrentQueue<Payload> &queue);
-        void processMsg(Payload& msg);
+        void entrypoint(ConcurrentQueue<Payload*> &queue);
+        void processMsg(Payload *msg);
     private:
         std::fstream    m_ofs;
         std::string     m_filename;
