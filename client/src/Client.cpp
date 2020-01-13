@@ -1,4 +1,5 @@
 #include <Client.h>
+#include <chrono>
 
 Client::Client(std::string ip, uint32_t port): m_ip(ip), m_port(port){
 
@@ -38,6 +39,9 @@ bool Client::startClient(){
 int Client::sendData(std::vector<std::string> messages, uint32_t clientId){
     int write_len = 0;
     Config *cfg = Config::getInstance();
+
+    auto started = std::chrono::high_resolution_clock::now();
+
     for(int i=0; i < messages.size(); i++){
 
         struct Payload pload;
@@ -76,6 +80,12 @@ int Client::sendData(std::vector<std::string> messages, uint32_t clientId){
             sleep((cfg->m_cfg).time_interval_btn_msg);
         }
     }
+
+    auto done = std::chrono::high_resolution_clock::now();
+    auto totaltime = std::chrono::duration_cast<std::chrono::microseconds>(done-started).count();
+    double avgLatency = totaltime/(double)messages.size();
+    std::cout <<"Total time= "<<totaltime<<std::endl<<"Average Latency= "<<avgLatency<<std::endl;
+
     return write_len;
 }
 

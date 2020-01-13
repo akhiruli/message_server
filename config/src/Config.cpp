@@ -5,6 +5,7 @@ Config* Config::m_obj = NULL;
 static std::mutex config_mutex;
 
 Config::Config(): m_filename("app.conf"){
+    getConfigFileName();
     loadConfig();
 }
 
@@ -17,6 +18,24 @@ Config* Config::getInstance(){
 
     return m_obj;
 }
+
+void Config::getConfigFileName(){
+    const char* ms_home = getenv( "MS_HOME" );
+    if(ms_home){
+        std::string str(ms_home);
+        str.erase(std::remove_if(str.begin(), str.end(), isspace), str.end());
+        size_t len = str.size();
+        std::string key("/");
+        if(str[len-1] == '/')
+            str.replace (str.size()-1, key.length(),"");
+
+        m_filename = str.append("/app.conf");
+    }
+    else{
+        printf("Failed to load config file\n");
+    }
+}
+
 bool Config::loadConfig(){
     std::ifstream ifs(m_filename.c_str());
     std::string line;

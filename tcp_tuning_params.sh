@@ -9,4 +9,6 @@ echo 1 > /proc/sys/net/ipv4/tcp_tw_reuse
 
 echo 10000000 > /proc/sys/fs/file-max
 
+echo "fs.file-max = 100000" >> /etc/sysctl.conf
+
 sysctl -p

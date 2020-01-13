@@ -44,7 +44,7 @@ void FileWriteWorker::processMsg(Payload *msg){
 
     if(m_numbufferedmsg < m_maxbufmsg){
         printf("Buffering the message for future write as number of message haven't" 
-            " reached the minim configured number, framed msg: %s\n", str.c_str());
+            " reached the minimum configured number, framed msg: %s\n", str.c_str());
         return;
     } 
 

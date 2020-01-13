@@ -115,7 +115,7 @@ void MessageServer::on_accept(int fd, short ev, void *arg)
     /* Accept the new connection. */
     client_fd = accept(fd, (struct sockaddr *)&client_addr, &client_len);
     if (client_fd == -1) {
-        printf("MessageServer::on_accept:accept failed\n");
+        printf("MessageServer::on_accept:accept failed with error %s\n", strerror(errno));
         return;
     }
 

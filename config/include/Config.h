@@ -5,6 +5,7 @@
 #include <map>
 #include <iostream>
 #include <algorithm>
+#include <cstdlib>
 
 struct ConfigParams{
     std::string ip;
@@ -27,6 +28,7 @@ class Config{
         static Config* getInstance();
         bool loadConfig();
         void fillConfigParams( std::map<std::string, std::string>&);
+        void getConfigFileName();
         ConfigParams    m_cfg;
     private:
         Config();
